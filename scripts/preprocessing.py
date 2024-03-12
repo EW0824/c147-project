@@ -1,6 +1,10 @@
 
 import numpy as np
+import torch
+import torch.nn.functional as F
 
+def to_categorical(y, num_classes):
+    return np.eye(num_classes, dtype='uint8')[y]
 
 def adjust_data(X_train_valid, y_train_valid):
     ## Adjusting the labels so that 
@@ -100,7 +104,7 @@ def test_data_prep(X):
 
 
 
-def data_reshaping(X_train_valid_prep, y_train_valid_prep, X_test_prep, y_test_prep):
+def data_reshaping(X_train_valid_prep, y_train_valid_prep, X_test_prep, y_test):
 
     ## Random splitting and reshaping the data
 
@@ -116,8 +120,12 @@ def data_reshaping(X_train_valid_prep, y_train_valid_prep, X_test_prep, y_test_p
     print('Shape of training labels:',y_train.shape)
     print('Shape of validation labels:',y_valid.shape)
 
-
     # Converting the labels to categorical variables for multiclass classification
+    label_mapping = {769: 0, 770: 1, 771: 2, 772: 3}
+    y_train = np.array([label_mapping[label] for label in y_train])
+    y_valid = np.array([label_mapping[label] for label in y_valid])
+    y_test = np.array([label_mapping[label] for label in y_test])
+
     y_train = to_categorical(y_train, 4)
     y_valid = to_categorical(y_valid, 4)
     y_test = to_categorical(y_test, 4)
