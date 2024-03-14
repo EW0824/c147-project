@@ -9,34 +9,31 @@ def get_same_padding(kernel_size):
     return (kernel_size - 1) // 2
 
 class CNNLSTM(nn.Module):
-    def __init__(self):
+    def __init__(self, dropout_rate,filter_size):
         super(CNNLSTM, self).__init__()
-        
-        self.conv1 = nn.Conv2d(1, 25, kernel_size=(5,5), padding=get_same_padding(5))
-        self.pool1 = nn.MaxPool2d(kernel_size=(3,1), padding=(get_same_padding(3), 0))
-        self.batchnorm1 = nn.BatchNorm2d(25)
-        self.dropout1 = nn.Dropout(0.6)
 
-        self.conv2 = nn.Conv2d(25, 50, kernel_size=(5,5), padding=get_same_padding(5))
-        self.pool2 = nn.MaxPool2d(kernel_size=(3,1), padding=(get_same_padding(3), 0))
-        self.batchnorm2 = nn.BatchNorm2d(50)
-        self.dropout2 = nn.Dropout(0.6)
+        self.conv1 = nn.Conv1d(22, 25, kernel_size=filter_size, padding=get_same_padding(filter_size))
+        self.pool1 = nn.MaxPool1d(kernel_size=3, padding=1)
+        self.batchnorm1 = nn.BatchNorm1d(25)
+        self.dropout1 = nn.Dropout(dropout_rate)
 
-        self.conv3 = nn.Conv2d(50, 100, kernel_size=(5,5), padding=get_same_padding(5))
-        self.pool3 = nn.MaxPool2d(kernel_size=(3,1), padding=(get_same_padding(3), 0))
-        self.batchnorm3 = nn.BatchNorm2d(100)
-        self.dropout3 = nn.Dropout(0.6)
+        self.conv2 = nn.Conv1d(25, 50, kernel_size=filter_size, padding=get_same_padding(filter_size))
+        self.pool2 = nn.MaxPool1d(kernel_size=3, padding=1)
+        self.batchnorm2 = nn.BatchNorm1d(50)
+        self.dropout2 = nn.Dropout(dropout_rate)
 
-        self.conv4 = nn.Conv2d(100, 200, kernel_size=(5,5), padding=get_same_padding(5))
-        self.pool4 = nn.MaxPool2d(kernel_size=(3,1), padding=(get_same_padding(3), 0))
-        self.batchnorm4 = nn.BatchNorm2d(200)
-        self.dropout4 = nn.Dropout(0.6)
+        self.conv3 = nn.Conv1d(50, 100, kernel_size=filter_size, padding=get_same_padding(filter_size))
+        self.pool3 = nn.MaxPool1d(kernel_size=3, padding=1)
+        self.batchnorm3 = nn.BatchNorm1d(100)
+        self.dropout3 = nn.Dropout(dropout_rate)
 
-        self.num_flat_features = None
+        self.conv4 = nn.Conv1d(100, 200, kernel_size=filter_size, padding=get_same_padding(filter_size))
+        self.pool4 = nn.MaxPool1d(kernel_size=3, padding=1)
+        self.batchnorm4 = nn.BatchNorm1d(200)
+        self.dropout4 = nn.Dropout(dropout_rate)
 
-        self.fc = None
-        self.lstm = nn.LSTM(40, 10, batch_first=True, dropout=0.4)
-        self.fc_final = nn.Linear(10, 4)
+        self.lstm = nn.LSTM(1400, 10, batch_first=True, dropout=0.4, bidirectional=True)
+        self.fc = nn.Linear(20, 4)
 
     def forward(self, x):
         x = F.elu(self.conv1(x))
@@ -58,18 +55,13 @@ class CNNLSTM(nn.Module):
         x = self.pool4(x)
         x = self.batchnorm4(x)
         x = self.dropout4(x)
-
-        if self.num_flat_features is None:
-            self.num_flat_features = x.shape[1] * x.shape[2] * x.shape[3]
-            self.fc = nn.Linear(self.num_flat_features, 40).to(x.device)
-
-
+        # print(x.shape)
+        
         x = x.view(x.size(0), -1)
-        x = self.fc(x)
-        x = x.view(x.size(0), 1, -1)
+        x = x.view(x.size(0), 1, 1400)
 
         x, (hn, cn) = self.lstm(x)
         x = x[:, -1, :]
 
-        x = self.fc_final(x)
+        x = self.fc(x)
         return x
