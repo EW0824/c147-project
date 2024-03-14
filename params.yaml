@@ -1,0 +1,13 @@
+
+data_loader:
+  shuffle: True
+  validation_split: 0.2
+
+
+
+training:
+  batch_size: 64
+  num_epochs: 50
+  lr: 0.001
+
+
